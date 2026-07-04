@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My Tasks</title>
+
+  <!--
+    Favicon: displayed in the browser tab, bookmarks, and shortcuts.
+   
+    Two formats for maximum browser compatibility:
+    1. favicon.ico  — universally supported (Chrome, Firefox, Safari, Edge).
+                      Contains three embedded sizes: 16×16, 32×32, 48×48px.
+                      The browser picks the best size for each context.
+    2. favicon.svg  — modern browsers only; scales perfectly on retina screens.
+                      Listed second so modern browsers prefer it over the .ico.
+  -->
+ <link rel="icon" type="image/svg+xml" href="assets/favicon/favicon.svg" />
+ <link rel="icon" type="image/x-icon" href="assets/favicon/favicon.ico" />
+
+  <!--
+    Tabler Icons (outline set, ~5 800 icons).
+    Loaded from jsDelivr CDN — requires internet on first visit,
+    then cached by the browser for offline use.
+  -->
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@latest/tabler-icons.min.css" />
+
+  <!-- App stylesheet -->
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+
+<body>
+<div class="app">
+
+  <!-- ===========================================================
+       HEADER
+       Shows: app title, today's date, countdown to midnight reset,
+       notification button, language toggle, and theme switcher.
+  =========================================================== -->
+  <header class="hdr">
+    <h1>My Tasks</h1><!-- text updated by updateStaticStrings() -->
+
+    <div class="hdr-meta">
+
+      <!-- Today's date — updated by render() -->
+      <p id="date-str"></p>
+
+      <!-- Countdown to the daily reset at midnight -->
+      <div class="chip">
+        <i class="ti ti-clock" aria-hidden="true"></i>
+        <span id="countdown">--:--:--</span>
+      </div>
+
+      <!--
+        Notification button.
+        CSS class changes based on permission state:
+          default  → .icon-btn
+          granted  → .icon-btn.granted  (green)
+          denied   → .icon-btn.denied   (red)
+      -->
+      <button class="icon-btn" id="btn-notif" onclick="requestNotifications()">
+        <i class="ti ti-bell" aria-hidden="true"></i>
+        <span id="notif-label">Notifications</span>
+      </button>
+
+      <!--
+        Language toggle.
+        Shows the OTHER language label (e.g. "IT" when English is active).
+        Clicking calls setLanguage() with the opposite locale.
+      -->
+      <button class="icon-btn" id="btn-lang"
+              onclick="setLanguage(i18n.getLocale() === 'en' ? 'it' : 'en')"
+              title="Switch language">
+        IT
+      </button>
+
+      <!--
+        Theme switcher — three options:
+          System: follow OS preference (default)
+          Light:  force light theme
+          Dark:   force dark theme
+        Active button gets .active class; choice is saved in localStorage.
+      -->
+      <div class="theme-toggle" role="group" aria-label="Theme">
+        <button id="btn-theme-system" class="active"
+                onclick="setTheme('system', this)"
+                title="Follow system">
+          <i class="ti ti-device-desktop" aria-hidden="true"></i>
+        </button>
+        <button id="btn-theme-light"
+                onclick="setTheme('light', this)"
+                title="Light mode">
+          <i class="ti ti-sun" aria-hidden="true"></i>
+        </button>
+        <button id="btn-theme-dark"
+                onclick="setTheme('dark', this)"
+                title="Dark mode">
+          <i class="ti ti-moon" aria-hidden="true"></i>
+        </button>
+      </div>
+
+    </div>
+  </header>
+
+
+  <!-- ===========================================================
+       ADD TASK FORM
+  =========================================================== -->
+  <div class="form-card">
+
+    <!-- Task text input (also submits on Enter) -->
+    <div class="form-row">
+      <input type="text" id="new-task" placeholder="New task…" />
+    </div>
+
+    <!-- Type toggle: Daily (resets at midnight) / One-time (disappears after completion) -->
+    <div class="form-row">
+      <label id="label-type">Type</label>
+      <div class="type-toggle" id="form-type-toggle">
+        <button id="btn-type-daily" class="active"
+                onclick="setFormType('daily', this)">
+          <i class="ti ti-repeat" aria-hidden="true"></i>Daily
+        </button>
+        <button id="btn-type-once"
+                onclick="setFormType('once', this)">
+          <i class="ti ti-calendar-event" aria-hidden="true"></i>One-time
+        </button>
+      </div>
+    </div>
+
+    <!-- Priority selector -->
+    <div class="form-row">
+      <label id="label-priority" for="prio-sel">Priority</label>
+      <select id="prio-sel">
+        <option value="low">Low</option>
+        <option value="med" selected>Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
+    <!-- ===========================================================
+         REPEAT PANEL
+         Visible only when type = Daily.
+         Two modes:
+           Specific days  — click weekday buttons (Mon–Sun)
+           Every N days   — numeric input counted from a fixed epoch
+    =========================================================== -->
+    <div class="repeat-panel show" id="repeat-panel">
+      <div class="divider"></div>
+
+      <div class="form-row" style="margin-top:8px; margin-bottom:6px">
+        <label id="label-repeat">Repeat</label>
+        <div class="repeat-mode" id="form-repeat-mode">
+          <button id="btn-repeat-days" class="active"
+                  onclick="setFormRepeatMode('days', this)">
+            Specific days
+          </button>
+          <button id="btn-repeat-interval"
+                  onclick="setFormRepeatMode('interval', this)">
+            Every N days
+          </button>
+        </div>
+      </div>
+
+      <!-- Weekday buttons — text replaced by i18n on language switch -->
+      <div id="rp-days">
+        <div class="days-row" id="form-days-row">
+          <button class="day-btn" data-d="0">Mo</button>
+          <button class="day-btn" data-d="1">Tu</button>
+          <button class="day-btn" data-d="2">We</button>
+          <button class="day-btn" data-d="3">Th</button>
+          <button class="day-btn" data-d="4">Fr</button>
+          <button class="day-btn" data-d="5">Sa</button>
+          <button class="day-btn" data-d="6">Su</button>
+        </div>
+      </div>
+
+      <!-- Numeric interval input (hidden by default) -->
+      <div id="rp-interval" style="display:none">
+        <div class="interval-row">
+          <label class="interval-every">Every</label>
+          <input type="number" id="interval-val" min="1" max="30" value="2" />
+          <label class="interval-days">days</label>
+        </div>
+      </div>
+
+      <div class="divider" style="margin-top:8px"></div>
+    </div><!-- /#repeat-panel -->
+
+
+    <!-- Time slot: optional start and end time (HH:MM) -->
+    <div class="form-row">
+      <label id="label-time">Time</label>
+      <div class="time-row">
+        <input type="time" id="time-start" />
+        <span class="time-sep" id="label-time-sep">–</span>
+        <input type="time" id="time-end" />
+      </div>
+    </div>
+
+    <!--
+      Reminder row: visible only when notifications are granted AND
+      a start time has been entered. Shows offset select.
+    -->
+    <div class="form-row" id="notif-row" style="display:none">
+      <label id="label-reminder">Reminder</label>
+      <div class="notif-offset">
+        <select id="notif-offset">
+          <option value="0">At start time</option>
+          <option value="5">5 min before</option>
+          <option value="10" selected>10 min before</option>
+          <option value="15">15 min before</option>
+          <option value="30">30 min before</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Submit button -->
+    <button class="add-btn" id="btn-add" onclick="addTask()">
+      <i class="ti ti-plus" aria-hidden="true"></i> Add task
+    </button>
+
+  </div><!-- /.form-card -->
+
+
+  <!-- Daily completion progress bar — width set by JS -->
+  <div class="progress-bar">
+    <div class="progress-fill" id="prog" style="width:0%"></div>
+  </div>
+
+
+  <!-- ===========================================================
+       TASK LIST
+       Populated dynamically by render() in four sections:
+         1. Today's habits  (daily tasks active today)
+         2. To do           (one-time, not done)
+         3. Completed       (one-time, done)
+         4. Not scheduled   (daily tasks not active today)
+  =========================================================== -->
+  <main id="list-container" aria-live="polite" aria-label="Task list"></main>
+
+  <!-- Shown when there are no tasks at all -->
+  <p class="empty-state" id="empty-state" style="display:none">
+    No tasks yet. Add one above!
+  </p>
+
+
+  <!-- ===========================================================
+       STATISTICS
+  =========================================================== -->
+  <div class="stats">
+    <div class="stat">
+      <div class="stat-num" id="stat-done">0</div>
+      <div class="stat-lbl" id="stat-lbl-done">Done today</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-streak">0</div>
+      <div class="stat-lbl" id="stat-lbl-streak">Day streak</div>
+    </div>
+    <div class="stat">
+      <div class="stat-num" id="stat-pct">0%</div>
+      <div class="stat-lbl" id="stat-lbl-pct">Completion</div>
+    </div>
+  </div>
+
+</div><!-- /.app -->
+
+
+<!-- ===========================================================
+     EDIT MODAL
+     Opens when the edit (pencil) button is clicked on a task card.
+     All fields are pre-filled with the task's current values.
+     Close with: X button | Escape key | click backdrop
+=========================================================== -->
+<div class="modal-overlay" id="modal" style="display:none"
+     onclick="closeModalOutside(event)"
+     role="dialog" aria-modal="true" aria-labelledby="modal-title">
+
+  <div class="modal">
+
+    <!-- Modal header -->
+    <div class="modal-header">
+      <h2 id="modal-title">Edit task</h2>
+      <button class="modal-close-btn" id="btn-modal-close"
+              onclick="closeModal()" aria-label="Close">
+        <i class="ti ti-x" style="font-size:16px" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <!-- Hidden field stores the ID of the task being edited -->
+    <input type="hidden" id="edit-id" />
+
+    <!-- Text -->
+    <div class="form-row">
+      <input type="text" id="edit-text" placeholder="Task text…" />
+    </div>
+
+    <!-- Type -->
+    <div class="form-row">
+      <label id="label-edit-type">Type</label>
+      <div class="type-toggle" id="edit-type-toggle">
+        <button id="btn-edit-type-daily" onclick="setEditType('daily', this)">
+          <i class="ti ti-repeat" aria-hidden="true"></i>Daily
+        </button>
+        <button id="btn-edit-type-once" onclick="setEditType('once', this)">
+          <i class="ti ti-calendar-event" aria-hidden="true"></i>One-time
+        </button>
+      </div>
+    </div>
+
+    <!-- Priority -->
+    <div class="form-row">
+      <label id="label-edit-priority" for="edit-prio">Priority</label>
+      <select id="edit-prio">
+        <option value="low">Low</option>
+        <option value="med">Medium</option>
+        <option value="high">High</option>
+      </select>
+    </div>
+
+    <!-- Repeat panel (mirrors the add-form panel) -->
+    <div class="repeat-panel show" id="edit-repeat-panel">
+      <div class="divider"></div>
+
+      <div class="form-row" style="margin-top:8px; margin-bottom:6px">
+        <label id="label-edit-repeat">Repeat</label>
+        <div class="repeat-mode" id="edit-repeat-mode">
+          <button id="btn-edit-repeat-days"
+                  onclick="setEditRepeatMode('days', this)">
+            Specific days
+          </button>
+          <button id="btn-edit-repeat-interval"
+                  onclick="setEditRepeatMode('interval', this)">
+            Every N days
+          </button>
+        </div>
+      </div>
+
+      <div id="edit-rp-days">
+        <div class="days-row" id="edit-days-row">
+          <button class="day-btn" data-d="0">Mo</button>
+          <button class="day-btn" data-d="1">Tu</button>
+          <button class="day-btn" data-d="2">We</button>
+          <button class="day-btn" data-d="3">Th</button>
+          <button class="day-btn" data-d="4">Fr</button>
+          <button class="day-btn" data-d="5">Sa</button>
+          <button class="day-btn" data-d="6">Su</button>
+        </div>
+      </div>
+
+      <div id="edit-rp-interval" style="display:none">
+        <div class="interval-row">
+          <label class="interval-every">Every</label>
+          <input type="number" id="edit-interval" min="1" max="30" value="2" />
+          <label class="interval-days">days</label>
+        </div>
+      </div>
+
+      <div class="divider" style="margin-top:8px"></div>
+    </div>
+
+    <!-- Time slot -->
+    <div class="form-row">
+      <label id="label-edit-time">Time</label>
+      <div class="time-row">
+        <input type="time" id="edit-time-start" />
+        <span class="time-sep" id="label-edit-time-sep">–</span>
+        <input type="time" id="edit-time-end" />
+      </div>
+    </div>
+
+    <!-- Reminder -->
+    <div class="form-row" id="edit-notif-row">
+      <label id="label-edit-reminder">Reminder</label>
+      <div class="notif-offset">
+        <select id="edit-notif-offset">
+          <option value="0">At start time</option>
+          <option value="5">5 min before</option>
+          <option value="10">10 min before</option>
+          <option value="15">15 min before</option>
+          <option value="30">30 min before</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- Modal actions -->
+    <div class="modal-footer">
+      <button class="btn-cancel" id="btn-modal-cancel" onclick="closeModal()">
+        Cancel
+      </button>
+      <button class="btn-save" id="btn-modal-save" onclick="saveEdit()">
+        <i class="ti ti-check" aria-hidden="true"></i> Save changes
+      </button>
+    </div>
+
+  </div><!-- /.modal -->
+</div><!-- /.modal-overlay -->
+
+
+<!--
+  Scripts — order matters:
+  1. i18n.js must be loaded first (script.js depends on the `i18n` object)
+  2. script.js bootstraps the app after both scripts are parsed
+-->
+<script src="js/i18n.js"></script>
+<script src="js/script.js"></script>
+
+</body>
+</html>

@@ -1,0 +1,828 @@
+/* ============================================================
+   style.css — To-Do App v5
+
+   Architecture:
+   ─ CSS custom properties (variables) for all theme colours.
+     :root defines the light theme; [data-theme="dark"] overrides them.
+     JS sets data-theme on <html> based on user preference.
+   ─ Single flat stylesheet — no preprocessor required.
+   ─ Dark-mode badge overrides are co-located at the bottom.
+   ============================================================ */
+
+
+/* ============================================================
+   1. DESIGN TOKENS — Light theme (default)
+   ============================================================ */
+:root {
+  /* Backgrounds */
+  --color-bg:        #f5f5f0;   /* page background         */
+  --color-surface:   #ffffff;   /* cards, inputs, modals   */
+  --color-surface-2: #eeeeee;   /* chips, stat cards       */
+  --color-hover:     #f0f0ec;   /* hover state background  */
+
+  /* Text */
+  --color-text-primary:   #1a1a1a;
+  --color-text-secondary: #666666;
+  --color-text-muted:     #aaaaaa;
+
+  /* Borders */
+  --color-border:       rgba(0, 0, 0, 0.10);
+  --color-border-input: rgba(0, 0, 0, 0.20);
+  --color-divider:      rgba(0, 0, 0, 0.08);
+
+  /* Brand / accent */
+  --color-brand:       #1D9E75;
+  --color-brand-dark:  #0F6E56;
+  --color-brand-light: #E1F5EE;
+
+  /* Semantic — danger */
+  --color-danger:      #E24B4A;
+
+  /* Misc */
+  --radius-card:  12px;
+  --radius-btn:   8px;
+  --radius-pill:  20px;
+  --radius-full:  50%;
+
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.18);
+}
+
+
+/* ============================================================
+   2. DESIGN TOKENS — Dark theme
+   ============================================================ */
+[data-theme="dark"] {
+  --color-bg:        #1a1a1a;
+  --color-surface:   #242424;
+  --color-surface-2: #2a2a2a;
+  --color-hover:     #2e2e2e;
+
+  --color-text-primary:   #e5e5e0;
+  --color-text-secondary: #888888;
+  --color-text-muted:     #555555;
+
+  --color-border:       rgba(255, 255, 255, 0.10);
+  --color-border-input: rgba(255, 255, 255, 0.18);
+  --color-divider:      rgba(255, 255, 255, 0.08);
+
+  --color-brand-light: #04342C;
+
+  --shadow-modal: 0 20px 60px rgba(0, 0, 0, 0.50);
+}
+
+
+/* ============================================================
+   3. RESET
+   ============================================================ */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+button {
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+select,
+input {
+  font-family: inherit;
+}
+
+
+/* ============================================================
+   4. BASE
+   ============================================================ */
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: var(--color-bg);
+  color: var(--color-text-primary);
+  min-height: 100vh;
+  /* Smooth transition when switching themes */
+  transition: background-color 0.2s ease, color 0.2s ease;
+}
+
+
+/* ============================================================
+   5. LAYOUT — App container
+   ============================================================ */
+.app {
+  max-width: 580px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+
+
+/* ============================================================
+   6. HEADER
+   ============================================================ */
+.hdr {
+  margin-bottom: 1.25rem;
+}
+
+.hdr h1 {
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+/* Row containing date, countdown, and control buttons */
+.hdr-meta {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 6px;
+  flex-wrap: wrap;
+}
+
+.hdr-meta p {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+/* Countdown chip */
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  background: var(--color-surface-2);
+  border-radius: var(--radius-btn);
+  padding: 3px 9px;
+}
+
+.chip i { font-size: 13px; }
+
+
+/* ============================================================
+   7. CONTROL BUTTONS (notifications, language)
+   ============================================================ */
+.icon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  padding: 3px 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: background 0.15s;
+}
+
+.icon-btn:hover { background: var(--color-hover); }
+
+/* Notifications granted */
+.icon-btn.granted {
+  color: #0F6E56;
+  border-color: #5DCAA5;
+  background: #E1F5EE;
+}
+
+/* Notifications denied */
+.icon-btn.denied {
+  color: #993C1D;
+  border-color: #F0997B;
+  background: #FAECE7;
+}
+
+
+/* ============================================================
+   8. THEME TOGGLE
+   ============================================================ */
+.theme-toggle {
+  display: flex;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+}
+
+.theme-toggle button {
+  border: none;
+  border-radius: 0;
+  padding: 5px 9px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.theme-toggle button i { font-size: 14px; }
+
+.theme-toggle button.active {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+.theme-toggle button:hover:not(.active) {
+  background: var(--color-hover);
+}
+
+
+/* ============================================================
+   9. FORM CARD
+   ============================================================ */
+.form-card {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+}
+
+/* Generic row inside the form */
+.form-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+  align-items: center;
+}
+
+.form-row:last-child { margin-bottom: 0; }
+
+.form-row label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  min-width: 70px;
+}
+
+/* Text inputs */
+.form-row input[type="text"] {
+  flex: 1;
+  padding: 8px 12px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  font-size: 14px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  outline: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.form-row input[type="text"]:focus {
+  border-color: rgba(0, 0, 0, 0.35);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="dark"] .form-row input[type="text"]:focus {
+  border-color: rgba(255, 255, 255, 0.30);
+  box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.05);
+}
+
+/* Select, time, number inputs share base style */
+.form-row select,
+.form-row input[type="time"],
+.form-row input[type="number"] {
+  flex: 1;
+  padding: 7px 10px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  font-size: 13px;
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+
+/* ── Type toggle (Daily / One-time) ── */
+.type-toggle {
+  display: flex;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  overflow: hidden;
+  flex: 1;
+}
+
+.type-toggle button {
+  flex: 1;
+  border: none;
+  border-radius: 0;
+  font-size: 12px;
+  padding: 7px 4px;
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  transition: background 0.15s, color 0.15s;
+}
+
+.type-toggle button i { font-size: 13px; }
+
+.type-toggle button.active {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+
+/* ── Repeat panel ── */
+.repeat-panel         { display: none; }   /* hidden by default */
+.repeat-panel.show    { display: block; }
+
+.repeat-mode {
+  display: flex;
+  gap: 6px;
+}
+
+.repeat-mode button {
+  font-size: 12px;
+  padding: 4px 10px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--color-text-secondary);
+  transition: background 0.15s, color 0.15s;
+}
+
+.repeat-mode button.active {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+
+/* ── Weekday buttons ── */
+.days-row {
+  display: flex;
+  gap: 5px;
+  flex-wrap: wrap;
+  margin-bottom: 4px;
+}
+
+.day-btn {
+  width: 33px;
+  height: 33px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-full);
+  background: transparent;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+/* Selected day */
+.day-btn.sel {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+  font-weight: 500;
+}
+
+
+/* ── Interval row ── */
+.interval-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.interval-row label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  min-width: auto;
+}
+
+.interval-row input[type="number"] {
+  width: 60px;
+  flex: none;
+}
+
+
+/* ── Time row (start – end) ── */
+.time-row {
+  flex: 1;
+  display: flex;
+  gap: 6px;
+  align-items: center;
+}
+
+.time-sep {
+  font-size: 13px;
+  color: var(--color-text-muted);
+}
+
+.time-row input[type="time"] { flex: 1; }
+
+
+/* ── Reminder (notification offset) ── */
+.notif-offset {
+  display: flex;
+  align-items: center;
+}
+
+.notif-offset select {
+  font-size: 12px;
+  padding: 4px 8px;
+  flex: none;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  outline: none;
+}
+
+
+/* ── Add button ── */
+.add-btn {
+  width: 100%;
+  margin-top: 6px;
+  padding: 9px 16px;
+  border: 0.5px solid var(--color-border-input);
+  border-radius: var(--radius-btn);
+  background: transparent;
+  color: var(--color-text-primary);
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s;
+}
+
+.add-btn:hover  { background: var(--color-hover); }
+.add-btn:active { transform: scale(0.98); }
+
+
+/* ── Horizontal divider ── */
+.divider {
+  height: 0.5px;
+  background: var(--color-divider);
+  margin: 8px 0;
+}
+
+
+/* ============================================================
+   10. PROGRESS BAR
+   ============================================================ */
+.progress-bar {
+  height: 4px;
+  background: var(--color-divider);
+  border-radius: 2px;
+  margin-bottom: 1rem;
+  overflow: hidden;
+}
+
+/* Width set by JS */
+.progress-fill {
+  height: 100%;
+  background: var(--color-brand);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+}
+
+
+/* ============================================================
+   11. SECTION LABELS
+   ============================================================ */
+.section-label {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 11px;
+  font-weight: 500;
+  color: var(--color-text-muted);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin: 1.25rem 0 6px;
+}
+
+.section-label i { font-size: 12px; }
+
+
+/* ============================================================
+   12. TASK LIST & CARD
+   ============================================================ */
+.task-list {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.task {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: var(--radius-card);
+  padding: 10px 12px;
+  transition: opacity 0.2s;
+}
+
+/* Completed task */
+.task.done {
+  opacity: 0.45;
+}
+
+.task.done .task-text {
+  text-decoration: line-through;
+  color: var(--color-text-secondary);
+}
+
+/* "Starting soon" highlight */
+.task.upcoming {
+  border-color: #5DCAA5;
+}
+
+
+/* ── Completion circle ── */
+.task-check {
+  width: 20px;
+  height: 20px;
+  border: 1.5px solid var(--color-border-input);
+  border-radius: var(--radius-full);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: transparent;
+  margin-top: 2px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.task-check.checked {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+}
+
+.task-check i {
+  font-size: 12px;
+  color: #fff;
+}
+
+
+/* ── Task body ── */
+.task-body {
+  flex: 1;
+  min-width: 0;
+}
+
+.task-text {
+  font-size: 14px;
+  color: var(--color-text-primary);
+  line-height: 1.4;
+}
+
+.task-meta {
+  display: flex;
+  gap: 5px;
+  margin-top: 4px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+
+/* ── Badges ── */
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 7px;
+  border-radius: var(--radius-pill);
+}
+
+.badge i { font-size: 10px; }
+
+/* Priority — light theme */
+.badge-prio-high { background: #FAECE7; color: #993C1D; }
+.badge-prio-med  { background: #FAEEDA; color: #854F0B; }
+.badge-prio-low  { background: #EAF3DE; color: #3B6D11; }
+
+/* Type — light theme */
+.badge-daily { background: #EEEDFE; color: #3C3489; }
+.badge-once  { background: #E6F1FB; color: #0C447C; }
+
+/* Time slot — light theme */
+.badge-time { background: #E1F5EE; color: #085041; }
+.badge-soon { background: #FAEEDA; color: #854F0B; }
+
+/* Plain text chip (day names, streaks) */
+.text-chip {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+}
+
+
+/* ── History dots ── */
+.streak-wrap {
+  display: flex;
+  gap: 3px;
+  align-items: center;
+}
+
+.streak-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-border);
+}
+
+.streak-dot.ok   { background: var(--color-brand); }
+.streak-dot.miss { background: #F09595; }
+.streak-dot.skip { background: var(--color-divider); }
+
+
+/* ── Action buttons (edit / delete) ── */
+.task-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.15s;
+}
+
+.task:hover .task-actions { opacity: 1; }
+
+.task-action-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-muted);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.task-action-btn i { font-size: 15px; }
+
+.task-action-btn:hover { background: var(--color-hover); }
+
+.task-action-btn.edit:hover   { color: #185FA5; }
+.task-action-btn.delete:hover { color: var(--color-danger); }
+
+
+/* ============================================================
+   13. EMPTY STATE
+   ============================================================ */
+.empty-state {
+  text-align: center;
+  padding: 2rem 0;
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+
+/* ============================================================
+   14. STATISTICS
+   ============================================================ */
+.stats {
+  display: flex;
+  gap: 10px;
+  margin-top: 1.25rem;
+}
+
+.stat {
+  flex: 1;
+  background: var(--color-surface-2);
+  border-radius: var(--radius-btn);
+  padding: 10px 12px;
+}
+
+.stat-num {
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.stat-lbl {
+  font-size: 11px;
+  color: var(--color-text-secondary);
+  margin-top: 2px;
+}
+
+
+/* ============================================================
+   15. EDIT MODAL
+   ============================================================ */
+
+/* Full-screen backdrop */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  padding: 1rem;
+}
+
+/* Centered panel */
+.modal {
+  background: var(--color-surface);
+  border: 0.5px solid var(--color-border);
+  border-radius: 16px;
+  padding: 1.25rem;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: var(--shadow-modal);
+}
+
+/* Modal header row */
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 1rem;
+}
+
+.modal-header h2 {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--color-text-primary);
+}
+
+.modal-close-btn {
+  background: none;
+  border: none;
+  color: var(--color-text-secondary);
+  padding: 4px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  transition: background 0.15s, color 0.15s;
+}
+
+.modal-close-btn:hover {
+  background: var(--color-hover);
+  color: var(--color-text-primary);
+}
+
+/* Modal footer with Cancel / Save */
+.modal-footer {
+  display: flex;
+  gap: 8px;
+  margin-top: 1rem;
+}
+
+.modal-footer button {
+  flex: 1;
+  padding: 9px;
+  border-radius: var(--radius-btn);
+  font-size: 14px;
+  border: 0.5px solid var(--color-border-input);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: background 0.15s, border-color 0.15s;
+}
+
+.btn-cancel {
+  background: transparent;
+  color: var(--color-text-secondary);
+}
+
+.btn-cancel:hover { background: var(--color-hover); }
+
+.btn-save {
+  background: var(--color-brand);
+  border-color: var(--color-brand);
+  color: #fff;
+  font-weight: 500;
+}
+
+.btn-save:hover {
+  background: var(--color-brand-dark);
+  border-color: var(--color-brand-dark);
+}
+
+
+/* ============================================================
+   16. DARK MODE — Badge overrides
+   Badges use hardcoded hex in light mode; dark mode shifts them
+   to darker backgrounds with correspondingly lighter text.
+   ============================================================ */
+[data-theme="dark"] .badge-prio-high { background: #3a1a10; color: #F0997B; }
+[data-theme="dark"] .badge-prio-med  { background: #3a2a08; color: #FAC775; }
+[data-theme="dark"] .badge-prio-low  { background: #1a2e10; color: #97C459; }
+
+[data-theme="dark"] .badge-daily { background: #1e1a40; color: #AFA9EC; }
+[data-theme="dark"] .badge-once  { background: #0e2040; color: #85B7EB; }
+
+[data-theme="dark"] .badge-time { background: #04342C; color: #9FE1CB; }
+[data-theme="dark"] .badge-soon { background: #3a2a08; color: #FAC775; }
+
+[data-theme="dark"] .icon-btn.granted { background: #04342C; }
+[data-theme="dark"] .icon-btn.denied  { background: #3a1a10; }
+
+[data-theme="dark"] .task.upcoming { border-color: #0F6E56; }
